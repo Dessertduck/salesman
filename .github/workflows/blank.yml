@@ -1,0 +1,43 @@
+name: Build Mac Executable
+
+on:
+  push:
+    tags:
+      - 'v*'          # 当推送版本标签时触发，例如 v1.0
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install pyinstaller pymysql pandas xlsxwriter openpyxl
+
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller --onefile --console \
+            --name "salesman_monitor_mac" \
+            --hidden-import pymysql \
+            --hidden-import pymysql.cursors \
+            --hidden-import pandas \
+            --hidden-import xlsxwriter \
+            --hidden-import openpyxl \
+            business_monitor.py
+
+      - name: Rename to .command
+        run: mv dist/salesman_monitor_mac dist/salesman_monitor_mac.command
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: salesman_monitor_mac
+          path: dist/salesman_monitor_mac.command
