@@ -13,13 +13,7 @@ warnings.filterwarnings('ignore')
 # 1. 数据库配置
 # ────────────────────────────────────────────────
 DB_CONFIG = {
-    "user": "lysjfx02",
-    "password": "VpT$jp&im5!G",
-    "host": "rr-uf62p8zih4j2n32t5qo.mysql.rds.aliyuncs.com",
-    "port": 3306,
-    "database": "yzl",
-    "charset": "utf8mb4",
-    "cursorclass": pymysql.cursors.DictCursor,
+#
 }
 
 # ────────────────────────────────────────────────
