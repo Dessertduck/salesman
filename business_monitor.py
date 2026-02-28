@@ -279,13 +279,38 @@ def main():
     else: base_dir = os.path.dirname(os.path.abspath(__file__))
     out_path = os.path.join(base_dir, f"业务员监控及推荐官明细_{datetime.now().strftime('%Y%m%d')}.xlsx")
     try:
-        recommend_df = query_to_df(SQL_RECOMMEND, "推荐官数据")
-        if not recommend_df.empty:
-            c, r, rec = process_data(recommend_df)
-            df_to_beautiful_excel(c, r, rec, out_path)
-            print(f"🎉 完成！文件已生成：{out_path}")
-    except Exception: traceback.print_exc()
+        print("\n[1/3] 正在从数据库拉取数据...")
+        recommend_df = query_to_df(SQL_RECOMMEND, "recommend_df")
+        if recommend_df.empty:
+            print("❌ 数据为空，请检查数据库连接或 SQL。")
+            input("\n按回车键退出...")
+            return
+
+        print("\n[2/3] 正在处理数据...")
+        final_city_report, result_final = process_data(recommend_df)
+        print(f"  城市汇总：{len(final_city_report)} 行")
+        print(f"  业务员明细：{len(result_final)} 行")
+
+        print(f"\n[3/3] 正在生成 Excel 报表...")
+        df_to_beautiful_excel(final_city_report, result_final, out_path)
+
+        print(f"\n🎉 完成！文件保存在：\n   {out_path}")
+
+        # ===== 新增：自动打开文件夹 =====
+        folder_path = os.path.dirname(out_path)
+        import platform
+        if platform.system() == 'Windows':
+            os.startfile(folder_path)
+        elif platform.system() == 'Darwin':  # macOS
+            os.system(f'open "{folder_path}"')
+        # ================================
+
+    except Exception:
+        print("\n❌ 发生未知错误：")
+        traceback.print_exc()
+
     input("\n按回车键退出...")
+
 
 if __name__ == '__main__':
     main()
