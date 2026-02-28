@@ -2,12 +2,12 @@ name: Build Mac Executable
 
 on:
   push:
-    branches: [ "main" ]  # 当你提交代码到 main 分支时触发
-  workflow_dispatch:      # 允许你在 GitHub 页面手动点击运行
+    branches: [ "main" ]          # 推送 main 分支时自动构建
+  workflow_dispatch:               # 支持手动触发
 
 jobs:
   build:
-    runs-on: macos-latest  # 在 GitHub 提供的 Mac 虚拟机上运行
+    runs-on: macos-latest           # 使用 GitHub 托管的 macOS 环境
 
     steps:
       - name: Checkout Code
@@ -16,12 +16,17 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.10'    # 可根据需要调整
 
       - name: Install Dependencies
         run: |
           python3 -m pip install --upgrade pip
-          pip3 install pyinstaller pymysql pandas xlsxwriter openpyxl
+          # 如果项目中有 requirements.txt 则使用，否则手动安装
+          if [ -f requirements.txt ]; then
+            pip3 install -r requirements.txt
+          else
+            pip3 install pyinstaller pymysql pandas xlsxwriter openpyxl
+          fi
 
       - name: Build with PyInstaller
         run: |
@@ -34,8 +39,11 @@ jobs:
             --hidden-import openpyxl \
             business_monitor.py
 
+      - name: Rename to .command
+        run: mv dist/salesman_monitor_mac dist/salesman_monitor_mac.command
+
       - name: Upload Executable
         uses: actions/upload-artifact@v4
         with:
-          name: Salesman-Monitor-Mac-Build
-          path: dist/salesman_monitor_mac
+          name: Salesman-Monitor-Mac
+          path: dist/salesman_monitor_mac.command
