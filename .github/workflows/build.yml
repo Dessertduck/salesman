@@ -1,66 +1,41 @@
-#!/bin/bash
-echo "============================================"
-echo "   Pack Mac Executable - Business Monitor Report"
-echo "============================================"
-echo
+name: Build Mac Executable
 
-# 切换到脚本所在目录
-cd "$(dirname "$0")"
+on:
+  push:
+    branches: [ "main" ]  # 当你提交代码到 main 分支时触发
+  workflow_dispatch:      # 允许你在 GitHub 页面手动点击运行
 
-# 确保环境变量包含常见的 Python 路径，防止找不到 pyinstaller
-export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:~/Library/Python/3.9/bin:~/Library/Python/3.8/bin
+jobs:
+  build:
+    runs-on: macos-latest  # 在 GitHub 提供的 Mac 虚拟机上运行
 
-# 检查 Python 3
-if ! command -v python3 &> /dev/null; then
-    echo "[ERROR] Python3 not found. Please install Python 3.8+"
-    echo "Download: https://www.python.org/downloads/"
-    read -p "Press Enter to exit..."
-    exit 1
-fi
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-echo "[1/3] Installing/Updating dependencies..."
-# 增加 --upgrade 确保库版本不会过旧
-pip3 install --upgrade pip -q
-pip3 install pyinstaller pymysql pandas xlsxwriter openpyxl -q
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-if [ $? -ne 0 ]; then
-    echo "[ERROR] Failed to install dependencies. Please check your internet connection."
-    read -p "Press Enter to exit..."
-    exit 1
-fi
+      - name: Install Dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install pyinstaller pymysql pandas xlsxwriter openpyxl
 
-echo
-echo "[2/3] Packaging executable (first time may take 1-2 minutes)..."
-# 加入 --clean (清理缓存) 和 --noconfirm (不询问直接覆盖旧版)
-pyinstaller --onefile --console --clean --noconfirm \
-    --name "salesman_monitor_mac" \
-    --hidden-import pymysql \
-    --hidden-import pymysql.cursors \
-    --hidden-import pandas \
-    --hidden-import xlsxwriter \
-    --hidden-import openpyxl \
-    business_monitor.py
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller --onefile --console --clean --noconfirm \
+            --name "salesman_monitor_mac" \
+            --hidden-import pymysql \
+            --hidden-import pymysql.cursors \
+            --hidden-import pandas \
+            --hidden-import xlsxwriter \
+            --hidden-import openpyxl \
+            business_monitor.py
 
-if [ $? -ne 0 ]; then
-    echo
-    echo "[ERROR] Packaging failed. Common reasons:"
-    echo "1. business_monitor.py file not found in current folder."
-    echo "2. System permissions issue."
-    read -p "Press Enter to exit..."
-    exit 1
-fi
-
-echo
-echo "[3/3] Cleaning up temp files..."
-# 清理生成的临时文件夹，保持目录整洁
-rm -rf build
-rm -f salesman_monitor_mac.spec
-
-echo
-echo "============================================"
-echo "  ✅ Done! Executable is at: ./dist/salesman_monitor_mac"
-echo "  Note: If you see 'Developer cannot be verified' error,"
-echo "  Go to 'System Settings' -> 'Privacy & Security' to allow it."
-echo "============================================"
-echo
-read -p "Press Enter to exit..."
+      - name: Upload Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Salesman-Monitor-Mac-Build
+          path: dist/salesman_monitor_mac
